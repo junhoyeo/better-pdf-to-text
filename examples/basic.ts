@@ -1,7 +1,7 @@
 import { extractTextFromFileAsync } from '../index';
 import path from 'path';
 import clipboard from 'clipboardy';
-import { readdir, mkdir, rm, writeFile, readFile } from 'fs/promises';
+import { readdir, mkdir, rm, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import util from 'util';
 import { exec } from 'child_process';
@@ -30,19 +30,19 @@ const preprocessPDF = async (inputPath: string): Promise<string> => {
     await execPromise(`gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -sOutputFile="${outputPath}" "${inputPath}"`);
     return outputPath;
   } catch (error) {
-    console.error(`Error preprocessing ${fileName}:`, error);
+    console.error(`[ghostscript] Error preprocessing ${fileName}:`, error);
     return inputPath; // Return original path if conversion fails
   }
 };
 
-// 새로 추가: Python 스크립트를 사용하여 PDF에서 텍스트 추출
 const extractWithPython = async (pdfPath: string): Promise<string> => {
   const tempDir = path.join(__dirname, 'temp');
   const outputFile = path.join(tempDir, `${path.basename(pdfPath, '.pdf')}_python_output.txt`);
-  
+  const cmd = `python3 ${path.join(__dirname, 'miner.py')} "${pdfPath}" "${outputFile}"`
+
   try {
     const execPromise = util.promisify(exec);
-    await execPromise(`python3 ${path.join(__dirname, 'miner.py')} "${pdfPath}" "${outputFile}"`);
+    await execPromise(cmd);
     
     if (existsSync(outputFile)) {
       const extractedText = await readFile(outputFile, 'utf-8');
@@ -50,7 +50,7 @@ const extractWithPython = async (pdfPath: string): Promise<string> => {
     }
     return '';
   } catch (error) {
-    console.error(`Error extracting with Python from ${pdfPath}:`, error);
+    console.error(`[python] Error extracting with \`${cmd}\` from ${pdfPath}:`, error);
     return '';
   }
 };
@@ -78,35 +78,29 @@ const main = async () => {
       const processedPath = await preprocessPDF(filePath);
       console.log(`Processing: ${processedPath}`);
       
-      // 수정: 주 메소드로 텍스트 추출 시도, 실패하면 Python으로 시도
       let contents = '';
       try {
         contents = await extractTextFromFileAsync(processedPath);
         contents = normalizeText(contents);
+        console.log(`✅ Successfully extracted text using primary method for ${file}`);
       } catch (err) {
         console.log(`Failed to extract text using primary method: ${(err as Error).message}`);
         console.log(`Trying backup Python method for ${file}...`);
         
-        // Python 백업 메소드로 추출 시도
+        // Extract text using Python's pdfminer (backup method)
         contents = await extractWithPython(processedPath);
         
         if (contents) {
-          console.log(`Successfully extracted text using Python for ${file}`);
+          console.log(`✅ Successfully extracted text using Python for ${file}`);
         } else {
-          console.log(`Failed to extract text from ${file} with all methods`);
+          console.log(`❌ Failed to extract text from ${file} with all methods`);
         }
       }
         
       text += contents;
-      
-      // Clean up if it's not the original file
-      if (processedPath !== filePath && existsSync(processedPath)) {
-        // Optional: remove each processed file after extraction
-        // await rm(processedPath);
-      }
     } catch (err: unknown) {
       const error = err as Error;
-      console.log(`Error processing ${file}: ${error.message}`);
+      console.log(`❌ Error processing ${file}: ${error.message}`);
       continue;
     }
   }
