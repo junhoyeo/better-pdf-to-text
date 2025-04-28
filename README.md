@@ -1,5 +1,11 @@
 # pdf-extract
 
+- Super goated pdf text miner
+- Not published to any registry yet
+- TODO: Add Vision, Correction using LLM, OCR, etc., like in [junhoyeo/BetterOCR](https://github.com/junhoyeo/BetterOCR)
+
+## packages
+
 - **`pdf-extract-node`**: Node.js binding for [darxkies/pdf-extract](https://github.com/darxkies/pdf-extract) (fork of [jrmuizel/pdf-extract](https://github.com/jrmuizel/pdf-extract) with better error handling) powered by [napi-rs](https://github.com/napi-rs/node-rs)
 - **`pdf-miner-node`**: Node.js wrapper around [pdfminer/pdfminer.six](https://github.com/pdfminer/pdfminer.six) using [node-gyp](https://github.com/nodejs/node-gyp)
 - **`core`**: Package that combines both extraction methods with fallback support
