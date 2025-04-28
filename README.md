@@ -1,10 +1,8 @@
 # pdf-extract
 
-This is a monorepo for PDF text extraction with multiple extraction methods:
-
-- **pdf-extract-node**: Node.js binding for [darxkies/pdf-extract](https://github.com/darxkies/pdf-extract) (fork of [jrmuizel/pdf-extract](https://github.com/jrmuizel/pdf-extract) with better error handling) powered by [napi-rs](https://github.com/napi-rs/node-rs)
-- **pdf-miner-node**: Node.js wrapper around Python's pdfminer using node-gyp
-- **core**: Package that combines both extraction methods with fallback support
+- **`pdf-extract-node`**: Node.js binding for [darxkies/pdf-extract](https://github.com/darxkies/pdf-extract) (fork of [jrmuizel/pdf-extract](https://github.com/jrmuizel/pdf-extract) with better error handling) powered by [napi-rs](https://github.com/napi-rs/node-rs)
+- **`pdf-miner-node`**: Node.js wrapper around [pdfminer/pdfminer.six](https://github.com/pdfminer/pdfminer.six) using [node-gyp](https://github.com/nodejs/node-gyp)
+- **`core`**: Package that combines both extraction methods with fallback support
 
 ## Setup
 
@@ -34,9 +32,3 @@ const main = async () => {
 
 main();
 ```
-
-## Requirements
-
-- Node.js 10 or higher
-- Python 3 with pdfminer.six installed (`pip install pdfminer.six`)
-- Ghostscript (for preprocessing PDFs)
