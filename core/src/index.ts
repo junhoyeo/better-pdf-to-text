@@ -3,11 +3,7 @@ import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import util from 'util';
 import { exec } from 'child_process';
-
-// Import from pdf-extract-node package
 import { extractTextFromFileAsync } from 'pdf-extract-node';
-
-// Import from pdf-miner-node package
 import { extractTextFromFile as extractWithPython } from 'pdf-miner-node';
 
 /**
@@ -99,4 +95,4 @@ export default {
   extractTextFromPDF,
   normalizeText,
   preprocessPDF
-}; 
+};
