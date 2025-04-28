@@ -57,7 +57,7 @@ pub fn extract_text_from_file(path: String) -> Result<String> {
         .map_err(|e| Error::new(Status::GenericFailure, format!("Failed to extract text: {}", e)))
 }
 
-#[napi]
+#[napi(ts_return_type = "Promise<string>")]
 pub fn extract_text_from_file_async(path: String) -> AsyncTask<ExtractTextTask> {
     AsyncTask::new(ExtractTextTask { path })
 }
@@ -78,7 +78,7 @@ pub fn extract_text_from_buffer(buffer: Buffer) -> Result<String> {
     result
 }
 
-#[napi]
+#[napi(ts_return_type = "Promise<string>")]
 pub fn extract_text_from_buffer_async(buffer: Buffer) -> AsyncTask<ExtractTextFromBufferTask> {
     AsyncTask::new(ExtractTextFromBufferTask {
         buffer: buffer.to_vec(),
