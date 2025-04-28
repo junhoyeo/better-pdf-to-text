@@ -3,7 +3,8 @@ import path from 'path';
 import clipboard from 'clipboardy';
 import { readdir, mkdir, rm } from 'fs/promises';
 import { existsSync } from 'fs';
-import { execSync } from 'child_process';
+import util from 'util';
+import { exec } from 'child_process';
 
 const normalizeText = (text: string): string => {
   return text
@@ -25,7 +26,8 @@ const preprocessPDF = async (inputPath: string): Promise<string> => {
   
   try {
     // Use Ghostscript to convert the PDF to a standard format
-    execSync(`gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -sOutputFile="${outputPath}" "${inputPath}"`);
+    const execPromise = util.promisify(exec);
+    await execPromise(`gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -sOutputFile="${outputPath}" "${inputPath}"`);
     return outputPath;
   } catch (error) {
     console.error(`Error preprocessing ${fileName}:`, error);
