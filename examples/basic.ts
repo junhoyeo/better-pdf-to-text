@@ -1,7 +1,7 @@
 import { extractTextFromFileAsync } from '../index';
 import path from 'path';
 import clipboard from 'clipboardy';
-import { readdir, mkdir, rm } from 'fs/promises';
+import { readdir, mkdir, rm, writeFile, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import util from 'util';
 import { exec } from 'child_process';
@@ -35,6 +35,26 @@ const preprocessPDF = async (inputPath: string): Promise<string> => {
   }
 };
 
+// 새로 추가: Python 스크립트를 사용하여 PDF에서 텍스트 추출
+const extractWithPython = async (pdfPath: string): Promise<string> => {
+  const tempDir = path.join(__dirname, 'temp');
+  const outputFile = path.join(tempDir, `${path.basename(pdfPath, '.pdf')}_python_output.txt`);
+  
+  try {
+    const execPromise = util.promisify(exec);
+    await execPromise(`python3 ${path.join(__dirname, 'miner.py')} "${pdfPath}" "${outputFile}"`);
+    
+    if (existsSync(outputFile)) {
+      const extractedText = await readFile(outputFile, 'utf-8');
+      return extractedText;
+    }
+    return '';
+  } catch (error) {
+    console.error(`Error extracting with Python from ${pdfPath}:`, error);
+    return '';
+  }
+};
+
 const main = async () => {
   const files = await readdir(__dirname);
   const pdfFiles = files.filter(file => file.endsWith('.pdf'));
@@ -58,13 +78,24 @@ const main = async () => {
       const processedPath = await preprocessPDF(filePath);
       console.log(`Processing: ${processedPath}`);
       
-      // Try to extract text from the processed PDF
-      const contents = await extractTextFromFileAsync(processedPath)
-        .then(text => normalizeText(text))
-        .catch((err: Error) => {
-          console.log(`Failed to extract text from ${file}: ${err.message}`);
-          return '';
-        });
+      // 수정: 주 메소드로 텍스트 추출 시도, 실패하면 Python으로 시도
+      let contents = '';
+      try {
+        contents = await extractTextFromFileAsync(processedPath);
+        contents = normalizeText(contents);
+      } catch (err) {
+        console.log(`Failed to extract text using primary method: ${(err as Error).message}`);
+        console.log(`Trying backup Python method for ${file}...`);
+        
+        // Python 백업 메소드로 추출 시도
+        contents = await extractWithPython(processedPath);
+        
+        if (contents) {
+          console.log(`Successfully extracted text using Python for ${file}`);
+        } else {
+          console.log(`Failed to extract text from ${file} with all methods`);
+        }
+      }
         
       text += contents;
       
