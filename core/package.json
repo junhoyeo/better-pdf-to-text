@@ -1,0 +1,19 @@
+{
+  "name": "pdf-extract-core",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "pdf-extract-node": "^0.1.0",
+    "pdf-miner-node": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.16.0",
+    "typescript": "^5.0.0"
+  }
+} 

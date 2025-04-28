@@ -13,7 +13,7 @@ let nativeBinding = null
 let localFileExisted = false
 let loadError = null
 
-const isMusl = () => {
+function isMusl() {
   // For Node 10
   if (!process.report || typeof process.report.getReport !== 'function') {
     try {

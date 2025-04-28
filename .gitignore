@@ -1,6 +1,12 @@
 # napi-rs
 *.node
 
+# node-gyp
+build/
+
+# tsc
+dist
+
 # macOS
 .DS_Store
 
@@ -11,7 +17,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Rust
-/target/
+target/
 **/*.rs.bk
 Cargo.lock
 
@@ -19,4 +25,11 @@ Cargo.lock
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw

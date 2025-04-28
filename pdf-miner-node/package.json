@@ -1,0 +1,21 @@
+{
+  "name": "pdf-miner-node",
+  "version": "0.1.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "build": "node-gyp rebuild"
+  },
+  "gypfile": true,
+  "license": "MIT",
+  "dependencies": {
+    "node-addon-api": "^5.1.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^9.4.0"
+  },
+  "engines": {
+    "node": ">= 10"
+  }
+} 

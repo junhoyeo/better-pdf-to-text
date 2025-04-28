@@ -1,31 +1,42 @@
-## pdf-extract
+# pdf-extract
 
-- Currently a Node.js binding for [darxkies/pdf-extract](https://github.com/darxkies/pdf-extract) (fork of [jrmuizel/pdf-extract](https://github.com/jrmuizel/pdf-extract) with better error handling) powered by [napi-rs](https://github.com/napi-rs/node-rs)
-  - Inspired by [scambier/obsidian-text-extractor](https://github.com/scambier/obsidian-text-extractor)
-- Not published to any registry yet
+This is a monorepo for PDF text extraction with multiple extraction methods:
+
+- **pdf-extract-node**: Node.js binding for [darxkies/pdf-extract](https://github.com/darxkies/pdf-extract) (fork of [jrmuizel/pdf-extract](https://github.com/jrmuizel/pdf-extract) with better error handling) powered by [napi-rs](https://github.com/napi-rs/node-rs)
+- **pdf-miner-node**: Node.js wrapper around Python's pdfminer using node-gyp
+- **core**: Package that combines both extraction methods with fallback support
+
+## Setup
+
+```bash
+# Install dependencies
+yarn install
+
+# Build all packages
+yarn build
+```
+
+## Usage
 
 ```ts
-import { extractTextFromFileAsync } from '../index';
-import path from 'path';
-import clipboard from 'clipboardy';
-
-const normalizeText = (text: string): string => {
-  return text
-    .split('\n') 
-    .map(line => line.trim()) 
-    .filter(line => line.length > 0) 
-    .map(line => line.replace(/\s+/g, ' ')) 
-    .join('\n'); 
-};
+import { extractTextFromPDF } from 'pdf-extract-core';
 
 const main = async () => {
-  const filePath = path.join(__dirname, 'example.pdf');
-  const text = await extractTextFromFileAsync(filePath)
-    .then(text => normalizeText(text));
-  console.log(text);
-
-  await clipboard.write(text);
+  const filePath = 'path/to/your/document.pdf';
+  
+  try {
+    const text = await extractTextFromPDF(filePath);
+    console.log(text);
+  } catch (error) {
+    console.error('Failed to extract text:', error);
+  }
 };
 
-main().catch(console.error);
+main();
 ```
+
+## Requirements
+
+- Node.js 10 or higher
+- Python 3 with pdfminer.six installed (`pip install pdfminer.six`)
+- Ghostscript (for preprocessing PDFs)
