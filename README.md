@@ -1,4 +1,4 @@
-# pdf-extract
+# better-pdf-to-text
 
 - Super goated pdf text miner
 - Not published to any registry yet
