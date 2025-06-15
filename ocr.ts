@@ -17,9 +17,15 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: strin
 }
 
 async function extractTextFromPDFWithOCR(pdfPath: string, maxPages?: number): Promise<string> {
-  // Create a temporary directory for images in current repo
-  const tempDir = fs.mkdtempSync(path.join('.', 'pdf-ocr-'));
-  console.log(`Created temp directory: ${tempDir}`);
+  // Create a permanent directory for images based on PDF filename
+  const pdfBaseName = path.basename(pdfPath, '.pdf');
+  const outputDir = path.join('.', `pdf-ocr-${pdfBaseName}`);
+  
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+  console.log(`Using output directory: ${outputDir}`);
   
   try {
     // Get PDF info to know how many pages we have
@@ -43,19 +49,19 @@ async function extractTextFromPDFWithOCR(pdfPath: string, maxPages?: number): Pr
     
     // Convert pages to images using command line
     try {
-      const outputPath = path.join(tempDir, 'page');
+      const outputPath = path.join(outputDir, 'page');
       const pageRange = maxPages ? `-f 1 -l ${maxPages}` : '';
       await execAsync(`pdftoppm -png ${pageRange} "${pdfPath}" "${outputPath}"`);
       console.log('PDF conversion complete');
       
       // Rename files to match expected pattern
-      const files = fs.readdirSync(tempDir);
+      const files = fs.readdirSync(outputDir);
       for (const file of files) {
         if (file.match(/^page-\d+\.png$/)) {
           const pageNum = file.match(/\d+/)?.[0];
           if (pageNum) {
-            const oldPath = path.join(tempDir, file);
-            const newPath = path.join(tempDir, `page-${parseInt(pageNum)}.png`);
+            const oldPath = path.join(outputDir, file);
+            const newPath = path.join(outputDir, `page-${parseInt(pageNum)}.png`);
             if (oldPath !== newPath) {
               fs.renameSync(oldPath, newPath);
             }
@@ -80,7 +86,7 @@ async function extractTextFromPDFWithOCR(pdfPath: string, maxPages?: number): Pr
     const extractedTexts: string[] = [];
     
     for (let i = 1; i <= pagesToProcess; i++) {
-      const imagePath = path.join(tempDir, `page-${i}.png`);
+      const imagePath = path.join(outputDir, `page-${i}.png`);
       
       if (fs.existsSync(imagePath)) {
         console.log(`Processing page ${i}/${pagesToProcess}...`);
@@ -103,18 +109,8 @@ async function extractTextFromPDFWithOCR(pdfPath: string, maxPages?: number): Pr
     return fullText;
     
   } finally {
-    // Clean up temporary files
-    console.log('Cleaning up temporary files...');
-    try {
-      const files = fs.readdirSync(tempDir);
-      for (const file of files) {
-        fs.unlinkSync(path.join(tempDir, file));
-      }
-      fs.rmdirSync(tempDir);
-      console.log('Cleanup complete');
-    } catch (error) {
-      console.error('Error during cleanup:', error);
-    }
+    // No cleanup - keeping files for inspection
+    console.log(`Output files kept in: ${outputDir}`);
   }
 }
 
@@ -185,16 +181,3 @@ if (require.main === module) {
 }
 
 export { extractTextFromPDFWithOCR };
-
-// Clean up any leftover temp directories on startup
-if (require.main === module) {
-  const dirs = fs.readdirSync('.').filter(d => d.startsWith('pdf-ocr-'));
-  for (const dir of dirs) {
-    try {
-      fs.rmSync(dir, { recursive: true, force: true });
-      console.log(`Cleaned up leftover temp directory: ${dir}`);
-    } catch (error) {
-      // Ignore errors
-    }
-  }
-}
