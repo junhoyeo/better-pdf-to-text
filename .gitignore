@@ -1,5 +1,8 @@
 # custom
 *.pdf
+*.traineddata
+*.png
+*.txt
 
 # napi-rs
 *.node

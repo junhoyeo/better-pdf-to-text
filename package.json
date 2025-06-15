@@ -9,11 +9,16 @@
   ],
   "scripts": {
     "start": "tsx index.ts",
+    "ocr": "tsx ocr.ts",
     "build": "yarn workspaces run build"
   },
   "license": "MIT",
   "devDependencies": {
     "clipboardy": "^4.0.0",
     "tsx": "^4.20.3"
+  },
+  "dependencies": {
+    "pdf-poppler": "^0.2.1",
+    "tesseract.js": "^6.0.1"
   }
 }
