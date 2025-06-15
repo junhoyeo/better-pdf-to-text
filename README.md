@@ -2,7 +2,8 @@
 
 - Super goated pdf text miner
 - Not published to any registry yet
-- TODO: Add Vision, Correction using LLM, OCR, etc., like in [junhoyeo/BetterOCR](https://github.com/junhoyeo/BetterOCR)
+- ✅ OCR support added for scanned PDFs using Tesseract.js
+- TODO: Add Vision, Correction using LLM, etc., like in [junhoyeo/BetterOCR](https://github.com/junhoyeo/BetterOCR)
 
 ## packages
 
@@ -22,6 +23,7 @@ yarn build
 
 ## Usage
 
+### Standard text extraction
 ```ts
 import { extractTextFromPDF } from 'pdf-extract-core';
 
@@ -37,4 +39,10 @@ const main = async () => {
 };
 
 main();
+```
+
+### OCR for scanned PDFs
+```bash
+# Extract text from scanned PDFs using OCR
+PDF_PATH=path/to/scanned.pdf yarn ocr
 ```
