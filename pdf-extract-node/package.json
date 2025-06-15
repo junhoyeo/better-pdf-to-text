@@ -20,7 +20,6 @@
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",
-    "clipboardy": "^4.0.0",
     "tsx": "^4.19.3"
   },
   "ava": {
@@ -29,4 +28,4 @@
   "engines": {
     "node": ">= 10"
   }
-} 
+}

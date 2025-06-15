@@ -8,7 +8,12 @@
     "core"
   ],
   "scripts": {
+    "start": "tsx index.ts",
     "build": "yarn workspaces run build"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "clipboardy": "^4.0.0",
+    "tsx": "^4.20.3"
+  }
 }

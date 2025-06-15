@@ -1,3 +1,6 @@
+# custom
+*.pdf
+
 # napi-rs
 *.node
 
