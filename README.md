@@ -41,8 +41,12 @@ const main = async () => {
 main();
 ```
 
+```bash
+PDF_PATH=path/to/scanned.pdf yarn start
+```
+
 ### OCR for scanned PDFs
 ```bash
 # Extract text from scanned PDFs using OCR
-PDF_PATH=path/to/scanned.pdf yarn ocr
+PDF_PATH=path/to/scanned.pdf MAX_PAGES=321 yarn ocr
 ```
