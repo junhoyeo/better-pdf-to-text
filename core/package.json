@@ -1,16 +1,18 @@
 {
-  "name": "pdf-extract-core",
+  "name": "core",
   "version": "0.1.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"
   },
   "license": "MIT",
   "dependencies": {
-    "pdf-extract-node": "^0.1.0",
-    "pdf-miner-node": "^0.1.0"
+    "pdf-extract-node": "file:../pdf-extract-node",
+    "pdf-miner-node": "file:../pdf-miner-node",
+    "pdf-to-img": "^2.0.0",
+    "tesseract.js": "^5.0.3"
   },
   "devDependencies": {
     "@types/node": "^18.16.0",

@@ -5,6 +5,7 @@ import util from 'util';
 import { exec } from 'child_process';
 import { extractTextFromFileAsync } from 'pdf-extract-node';
 import { extractTextFromFile as extractWithPython } from 'pdf-miner-node';
+import { extractTextFromPDFWithOCR } from '../../ocr';
 
 /**
  * Normalize text by removing excess whitespace and empty lines
@@ -16,6 +17,38 @@ export const normalizeText = (text: string): string => {
     .filter(line => line.length > 0) 
     .map(line => line.replace(/\s+/g, ' ')) 
     .join('\n'); 
+};
+
+/**
+ * Check if extracted text is garbage (CID-encoded or garbled)
+ * Returns true if text appears to be unreadable CID output
+ */
+export const isGarbageText = (text: string): boolean => {
+  if (!text || text.trim().length === 0) {
+    return true;
+  }
+  
+  // Count CID patterns like (cid:123)
+  const cidPattern = /\(cid:\d+\)/g;
+  const cidMatches = text.match(cidPattern);
+  if (cidMatches && cidMatches.length > 10) {
+    console.log(`[garbage-detection] Found ${cidMatches.length} CID patterns - text is garbage`);
+    return true;
+  }
+  
+  // Check ratio of readable vs non-readable characters
+  // Korean, English, numbers, common punctuation are considered readable
+  const readablePattern = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318Fa-zA-Z0-9\s.,!?;:'"()\-\[\]{}\/\\@#$%^&*+=<>~`]/g;
+  const readableMatches = text.match(readablePattern) || [];
+  const readableRatio = readableMatches.length / text.length;
+  
+  // If less than 30% of text is readable, consider it garbage
+  if (readableRatio < 0.3) {
+    console.log(`[garbage-detection] Readable ratio ${(readableRatio * 100).toFixed(1)}% < 30% - text is garbage`);
+    return true;
+  }
+  
+  return false;
 };
 
 /**
@@ -45,45 +78,70 @@ export const preprocessPDF = async (inputPath: string): Promise<string> => {
  * Extract text from a PDF file, trying multiple methods if needed
  */
 export const extractTextFromPDF = async (pdfPath: string): Promise<string> => {
+  const cleanupTemp = async () => {
+    const tempDir = path.join(path.dirname(pdfPath), 'temp');
+    if (existsSync(tempDir)) {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  };
+
   try {
-    // Preprocess the PDF first
     const processedPath = await preprocessPDF(pdfPath);
     console.log(`Processing: ${processedPath}`);
     
+    let extractedText = '';
+    let usedMethod = '';
+    
     try {
-      // Try primary method (pdf-extract-node)
       let contents = await extractTextFromFileAsync(processedPath);
       contents = normalizeText(contents);
-      console.log(`✅ Successfully extracted text using primary method`);
       
-      // Clean up temp directory if created during preprocessing
-      const tempDir = path.join(path.dirname(pdfPath), 'temp');
-      if (processedPath !== pdfPath && existsSync(tempDir)) {
-        await fs.rm(tempDir, { recursive: true, force: true });
-      }
-      
-      return contents;
-    } catch (err) {
-      console.log(`Failed to extract text using primary method: ${(err as Error).message}`);
-      console.log(`Trying backup Python method...`);
-      
-      // Extract text using Python's pdfminer (backup method)
-      const contents = await extractWithPython(processedPath);
-      
-      if (contents) {
-        console.log(`✅ Successfully extracted text using Python`);
-        
-        // Clean up temp directory if created during preprocessing
-        const tempDir = path.join(path.dirname(pdfPath), 'temp');
-        if (processedPath !== pdfPath && existsSync(tempDir)) {
-          await fs.rm(tempDir, { recursive: true, force: true });
-        }
-        
-        return normalizeText(contents);
+      if (contents.trim().length > 0 && !isGarbageText(contents)) {
+        console.log(`✅ Successfully extracted text using primary method`);
+        extractedText = contents;
+        usedMethod = 'primary';
       } else {
-        throw new Error('Failed to extract text with all methods');
+        throw new Error('Primary method returned empty or garbage text');
+      }
+    } catch (err) {
+      console.log(`Primary method failed: ${(err as Error).message}`);
+      console.log(`Trying Python method...`);
+      
+      try {
+        const contents = await extractWithPython(processedPath);
+        const normalizedContents = normalizeText(contents || '');
+        
+        if (normalizedContents.length > 0 && !isGarbageText(normalizedContents)) {
+          console.log(`✅ Successfully extracted text using Python`);
+          extractedText = normalizedContents;
+          usedMethod = 'python';
+        } else {
+          throw new Error('Python method returned empty or garbage text');
+        }
+      } catch (pythonErr) {
+        console.log(`Python method failed: ${(pythonErr as Error).message}`);
       }
     }
+    
+    if (!extractedText || isGarbageText(extractedText)) {
+      console.log(`⚠️ Text extraction failed or returned garbage, falling back to OCR...`);
+      
+      const absolutePath = path.resolve(pdfPath);
+      const ocrText = await extractTextFromPDFWithOCR(absolutePath);
+      
+      if (ocrText && ocrText.trim().length > 0) {
+        console.log(`✅ Successfully extracted text using OCR`);
+        extractedText = normalizeText(ocrText);
+        usedMethod = 'ocr';
+      } else {
+        throw new Error('All extraction methods failed including OCR');
+      }
+    }
+    
+    await cleanupTemp();
+    console.log(`📄 Extraction complete using ${usedMethod} method`);
+    return extractedText;
+    
   } catch (err: unknown) {
     const error = err as Error;
     console.error(`❌ Error processing PDF: ${error.message}`);
